@@ -1,5 +1,5 @@
 varying vec2 vUv;
-
+uniform float iTime;
 #define PI 3.1415926535897932384626433832795
 
 float rand(vec2 n) { 
@@ -18,6 +18,9 @@ vec4 permute(vec4 x)
 {
     return mod(((x*34.0)+1.0)*x, 289.0);
 }
+
+
+
 
 //	Classic Perlin 2D Noise 
 //	by Stefan Gustavson
@@ -57,6 +60,23 @@ float cnoise(vec2 P){
   return 2.3 * n_xy;
 }
 
+float circle (vec2 _st, float radius)
+{	_st -= 0.5;
+	return 1.-smoothstep(radius, radius*1.1,dot(_st,_st)*4.);    
+}
+
+vec2 brickTile(vec2 _st, float _zoom){
+    _st *= _zoom;
+
+    // Here is where the offset is happening
+    _st.x += 2.*(step(1., mod(_st.y,2.0))-0.500) * ( fract(iTime)) * step(1.,mod(iTime,2.));
+    
+    _st.y += 2.*(step(1., mod(_st.x,2.0))-0.500) * ( fract(iTime+1.)) * step(1.,mod(iTime+1.,2.));
+	
+    return fract(_st);
+}
+
+
 void main()
 {
      // Pattern 3
@@ -86,9 +106,9 @@ void main()
     // float strength = mod(vUv.x * 10.0,1.0);
     // strength = step(0.8,strength);
 
-    //    Pattern 11
-    float strength = step(0.8,mod(vUv.x * 10.0,1.0));
-    strength +=  step(0.8,mod(vUv.y * 10.0,1.0));
+    // //    Pattern 11
+    // float strength = step(0.8,mod(vUv.x * 10.0,1.0));
+    // strength +=  step(0.8,mod(vUv.y * 10.0,1.0));
 
       //    Pattern 12
     // float strength = step(0.8,mod(vUv.x * 10.0,1.0));
@@ -283,12 +303,39 @@ void main()
      // Pattern 50
     // float strength = step(0.9, sin(cnoise(vUv * 10.0) * 20.0));
 
-    // Colored Version
+       //    Pattern 51
+    //  vec2 st = brickTile(vUv,30.0 + 2.*floor(iTime/ 10.0));
+    // float strength = circle(st,0.3 * clamp(iTime, 0.3, 0.5));
+    //  strength =  step(0.8,mod(vUv.x * 10.0,1.0));
+    // strength +=  step(0.8,mod(vUv.y * 10.0,1.0));
+
+
+      //    Pattern 52
+  
+    vec2 pos =vec2(0.0, 0.0);
+    pos.x = mix(vUv.x, vUv.y, 0.5) * 10.0;
+    pos.y = mix(vUv.x + iTime * 0.75,1.0 - vUv.y, 0.5) * 10.0;
+
+    pos.x += sin(pos.y * 0.5 * PI * 1.0 ) * 0.5;
+    pos.x *= 0.5;
+
+    // pos.x *= clamp(iTime, 0.0, 1.0);
+
+    
+
+    float strength = floor(fract(pos.x) + 0.5);
+
     strength = clamp(strength, 0.0, 1.0);
-    vec3 blackColor = vec3(0.0);
-    vec3 uvColor = vec3(vUv, 1.0);
-    vec3 mixedColor = mix(blackColor, uvColor, strength);
-    gl_FragColor = vec4(mixedColor, 1.0);
+    vec3 color1 = vec3(1.0, 0.0,0.0);
+    vec3 color2 = vec3(0.0,0.0,1.0);
+    vec3 color = mix(color1, color2, strength);
+
+    // Colored Version
+    //
+    // vec3 blackColor = vec3(0.0);
+    // vec3 uvColor = vec3(vUv, 1.0);
+    // vec3 mixedColor = mix(blackColor, uvColor, strength);
+    gl_FragColor = vec4(color, 1.0);
 
 
         // gl_FragColor = vec4(vec3(strength), 1.0);
